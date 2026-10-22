@@ -45,6 +45,7 @@ mdtool does one thing well: **it makes `.md` files open like images do** — ins
 - 🧮 **Rich Markdown** — tables, task lists, footnotes, syntax highlighting (36 common languages), and LaTeX math via KaTeX
 - 🖼️ **Local images just work** — relative paths like `../images/diagram.png` resolve correctly
 - 🔄 **Live reload** — if another program changes the file, the window updates automatically
+- 🌐 **English & Chinese UI**, following your Windows display language
 - 🛡️ **Safe by default** — never overwrites your unsaved edits, keeps the file's original encoding (UTF-8 / UTF-8 BOM / GBK), and blocks scripts embedded in documents
 
 <p align="center">
@@ -55,21 +56,20 @@ mdtool does one thing well: **it makes `.md` files open like images do** — ins
 ## Installation
 
 1. Download **`mdtool.exe`** from the [latest release](../../releases/latest).
-2. Open a terminal in the download folder and run:
-
-   ```powershell
-   .\mdtool.exe --install
-   ```
-
-3. Windows will show an **"Open with"** dialog — pick **mdtool** and click **Always**.
+2. Double-click it and choose **Yes** when asked to install.
+3. Windows will show an **"Open with"** dialog. Pick **mdtool** and click **Always**.
 
 That's it. Every `.md` and `.markdown` file now opens in mdtool.
+
+Prefer the command line? `mdtool.exe --install` does the same thing.
+
+**Updating:** download the new `mdtool.exe`, double-click it, and choose **Yes** again.
 
 > [!NOTE]
 > **"Windows protected your PC"?** The executable isn't code-signed, so SmartScreen may warn you the first time. Click **More info → Run anyway**. You can also [build it yourself](#building-from-source) from source.
 
 <details>
-<summary><b>What does <code>--install</code> actually do?</b></summary>
+<summary><b>What does installing actually do?</b></summary>
 
 <br>
 
@@ -113,7 +113,7 @@ Measured from process start to first rendered frame on the author's Windows 11 m
 | Background helper running *(default after install)* | **~0.25 s** |
 | Cold start (no helper) | ~0.6 s |
 
-Most of a cold start is spent launching the WebView2 browser engine. To skip that, `--install` registers a small hidden **background helper** (`mdtool.exe --background`) that starts when you log in and keeps WebView2 warm. Every file you open then reuses it.
+Most of a cold start is spent launching the WebView2 browser engine. To skip that, installing registers a small hidden **background helper** (`mdtool.exe --background`) that starts when you log in and keeps WebView2 warm. Every file you open then reuses it.
 
 The trade-off is roughly **160 MB of RAM** held in the background. If you'd rather not have it, disable **mdtool** in *Task Manager → Startup apps*. Everything still works, just with ~0.6 s startup.
 
@@ -123,6 +123,14 @@ The trade-off is roughly **160 MB of RAM** held in the background. If you'd rath
 - Microsoft Edge **WebView2 Runtime** — preinstalled on Windows 11
 
 Windows 10 with the [WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/) should work too, but hasn't been tested.
+
+### Language
+
+The interface is shown in **Chinese** if your Windows display language is Chinese, and in **English** otherwise. To override it, set the `MDTOOL_LANG` environment variable and sign out and back in:
+
+```powershell
+setx MDTOOL_LANG zh    # or: en
+```
 
 ## Privacy & security
 
@@ -163,7 +171,6 @@ Set `MDTOOL_TIMING=1` before launching, and startup timings plus front-end error
 
 ## Roadmap
 
-- [ ] English UI (button labels and dialogs are currently in Chinese)
 - [ ] Code-signed releases
 - [ ] Mermaid diagrams
 - [ ] Export to HTML / PDF

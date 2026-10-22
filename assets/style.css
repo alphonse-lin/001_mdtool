@@ -67,6 +67,7 @@ body.editing #editor { display: block; }
   opacity: .35; transition: opacity .15s;
 }
 #toolbar:hover, body.editing #toolbar { opacity: 1; }
+#toolbar[hidden] { display: none; }
 #btn-save { display: none; }
 body.editing #btn-save { display: inline-block; }
 button {

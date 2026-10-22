@@ -38,6 +38,7 @@ mdtool 只做好一件事：**让 `.md` 文件像图片一样打开**——双�
 - 🧮 **完整的 Markdown 支持**：表格、任务列表、脚注、代码高亮（36 种常用语言）、KaTeX 数学公式
 - 🖼️ **本地图片直接显示**：`../images/diagram.png` 这类相对路径都能正确解析
 - 🔄 **自动刷新**：文件被其他程序修改后，窗口自动更新
+- 🌐 **中英文界面**，跟随 Windows 显示语言
 - 🛡️ **安全**：不会覆盖你未保存的修改；保存时保持原编码（UTF-8 / UTF-8 BOM / GBK）；阻止文档中嵌入的脚本
 
 <p align="center">
@@ -48,21 +49,20 @@ mdtool 只做好一件事：**让 `.md` 文件像图片一样打开**——双�
 ## 安装
 
 1. 从 [最新 Release](../../releases/latest) 下载 **`mdtool.exe`**。
-2. 在下载目录打开终端，运行：
-
-   ```powershell
-   .\mdtool.exe --install
-   ```
-
+2. 双击运行，在询问是否安装时选「**是**」。
 3. 系统会弹出「打开方式」窗口，选择 **mdtool**，点「**始终**」。
 
 完成。之后所有 `.md` / `.markdown` 文件都会用 mdtool 打开。
+
+习惯命令行的话，`mdtool.exe --install` 效果相同。
+
+**升级：** 下载新版 `mdtool.exe`，双击后再选一次「是」即可。
 
 > [!NOTE]
 > **提示「Windows 已保护你的电脑」？** 程序没有代码签名，SmartScreen 第一次可能会拦截。点「**更多信息 → 仍要运行**」即可。也可以[从源码自己编译](#从源码构建)。
 
 <details>
-<summary><b><code>--install</code> 具体做了什么？</b></summary>
+<summary><b>安装具体做了什么？</b></summary>
 
 <br>
 
@@ -106,7 +106,7 @@ mdtool 只做好一件事：**让 `.md` 文件像图片一样打开**——双�
 | 后台进程运行中（安装后默认） | **约 0.25 秒** |
 | 冷启动（无后台进程） | 约 0.6 秒 |
 
-冷启动的大部分时间花在拉起 WebView2 浏览器引擎上。为此 `--install` 会注册一个开机启动的隐藏**后台进程**（`mdtool.exe --background`）让 WebView2 保持就绪，之后打开的每个文件都直接复用它。
+冷启动的大部分时间花在拉起 WebView2 浏览器引擎上。为此安装时会注册一个开机启动的隐藏**后台进程**（`mdtool.exe --background`）让 WebView2 保持就绪，之后打开的每个文件都直接复用它。
 
 代价是后台常驻约 **160 MB 内存**。不需要的话，在「任务管理器 → 启动应用」中禁用 **mdtool** 即可，功能完全不受影响，只是打开变为约 0.6 秒。
 
@@ -116,6 +116,14 @@ mdtool 只做好一件事：**让 `.md` 文件像图片一样打开**——双�
 - Microsoft Edge **WebView2 运行时**（Windows 11 自带）
 
 装有 [WebView2 运行时](https://developer.microsoft.com/microsoft-edge/webview2/) 的 Windows 10 理论上也可以运行，但未经测试。
+
+### 界面语言
+
+Windows 显示语言为中文时界面显示中文，否则显示英文。如需手动指定，设置环境变量 `MDTOOL_LANG` 后注销并重新登录：
+
+```powershell
+setx MDTOOL_LANG zh    # 或 en
+```
 
 ## 隐私与安全
 
@@ -156,7 +164,6 @@ cargo test                     # 单元测试
 
 ## 路线图
 
-- [ ] 英文界面（目前按钮和对话框为中文）
 - [ ] 代码签名的发布版本
 - [ ] Mermaid 图表
 - [ ] 导出 HTML / PDF

@@ -15,7 +15,7 @@ include_dir = "0.7"
 encoding_rs = "0.8"
 winreg = "0.56"
 serde_json = "1"
-windows-sys = { version = "0.61", features = ["Win32_UI_WindowsAndMessaging", "Win32_UI_Shell", "Win32_Foundation", "Win32_System_Threading", "Win32_Security"] }
+windows-sys = { version = "0.61", features = ["Win32_UI_WindowsAndMessaging", "Win32_UI_Shell", "Win32_Foundation", "Win32_System_Threading", "Win32_Security", "Win32_Globalization"] }
 
 [build-dependencies]
 embed-resource = "3"

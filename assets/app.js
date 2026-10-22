@@ -2,9 +2,43 @@
   'use strict';
   const t0 = performance.now();
 
-  // Rust 通过 initialization script 注入：{path, name, dir, text, error, lossy}
+  // Rust 通过 initialization script 注入：{lang, debug, path, name, dir, text, error, lossy}
   const S = window.__MDTOOL__ || {};
   const $ = (id) => document.getElementById(id);
+
+  // ---------- 界面文字（中文系统显示中文，否则英文） ----------
+  const T = S.lang === 'zh' ? {
+    edit: '编辑', read: '阅读', save: '保存',
+    modeTip: '切换阅读 / 编辑 (Ctrl+E)', saveTip: '保存 (Ctrl+S)',
+    saveFailed: '保存失败：',
+    changedOutside: '文件已在外部被修改。', reload: '重新加载', keepMine: '保留我的修改',
+    cannotOpen: '无法打开文件',
+    lossy: '无法识别文件编码，内容可能显示为乱码；保存时将按 UTF-8 写入。',
+    usage: '<h1>mdtool</h1><p>小巧、快速的 Markdown 查看 / 编辑器。</p>' +
+      '<h3>用法</h3><ul>' +
+      '<li><code>mdtool.exe 文件.md</code>：打开文件</li>' +
+      '<li><code>mdtool.exe --install</code>：安装并关联 .md 文件</li>' +
+      '<li><code>mdtool.exe --uninstall</code>：取消关联</li></ul>' +
+      '<h3>快捷键</h3><ul><li><code>Ctrl+E</code>：切换阅读 / 编辑</li><li><code>Ctrl+S</code>：保存</li></ul>',
+  } : {
+    edit: 'Edit', read: 'Read', save: 'Save',
+    modeTip: 'Toggle reading / editing (Ctrl+E)', saveTip: 'Save (Ctrl+S)',
+    saveFailed: 'Could not save: ',
+    changedOutside: 'This file was changed by another program.', reload: 'Reload', keepMine: 'Keep my changes',
+    cannotOpen: 'Cannot open file',
+    lossy: 'Unknown text encoding. The content may look garbled, and saving will write it as UTF-8.',
+    usage: '<h1>mdtool</h1><p>A tiny, fast Markdown viewer &amp; editor.</p>' +
+      '<h3>Usage</h3><ul>' +
+      '<li><code>mdtool.exe file.md</code>: open a file</li>' +
+      '<li><code>mdtool.exe --install</code>: install and associate .md files</li>' +
+      '<li><code>mdtool.exe --uninstall</code>: remove the association</li></ul>' +
+      '<h3>Shortcuts</h3><ul><li><code>Ctrl+E</code>: toggle reading / editing</li><li><code>Ctrl+S</code>: save</li></ul>',
+  };
+  document.documentElement.lang = S.lang === 'zh' ? 'zh-CN' : 'en';
+  $('btn-mode').textContent = T.edit;
+  $('btn-mode').title = T.modeTip;
+  $('btn-save').textContent = T.save;
+  $('btn-save').title = T.saveTip;
   const preview = $('preview');
   const content = $('content');
   const editorEl = $('editor');
@@ -257,7 +291,7 @@
     if (text === null) return;
     editing = !editing;
     document.body.classList.toggle('editing', editing);
-    $('btn-mode').textContent = editing ? '阅读' : '编辑';
+    $('btn-mode').textContent = editing ? T.read : T.edit;
     if (editing) {
       if (!editor) await loadEditor();
       editor.refresh();
@@ -309,7 +343,7 @@
         refreshDirty();
         if (S.lossy) { S.lossy = false; hideBanner(); }
       } else {
-        alert('保存失败：' + err);
+        alert(T.saveFailed + err);
       }
       pendingSave = null;
     },
@@ -319,9 +353,9 @@
       if (!dirty || newText === text) {
         applyText(newText);
       } else {
-        showBanner('文件已在外部被修改。', [
-          ['重新加载', () => applyText(newText)],
-          ['保留我的修改', () => {}],
+        showBanner(T.changedOutside, [
+          [T.reload, () => applyText(newText)],
+          [T.keepMine, () => {}],
         ]);
       }
     },
@@ -330,19 +364,13 @@
 
   // ---------- 启动 ----------
   if (S.error) {
-    showStatic('<h2>无法打开文件</h2><p><code>' + escapeHtml(S.path || '') + '</code></p><p class="error">' + escapeHtml(S.error) + '</p>');
+    showStatic('<h2>' + T.cannotOpen + '</h2><p><code>' + escapeHtml(S.path || '') + '</code></p><p class="error">' + escapeHtml(S.error) + '</p>');
   } else if (text === null) {
-    showStatic(
-      '<h1>mdtool</h1><p>Markdown 查看/编辑器。</p>' +
-      '<h3>用法</h3><ul>' +
-      '<li><code>mdtool.exe 文件.md</code> 打开文件</li>' +
-      '<li><code>mdtool.exe --install</code> 安装并关联 .md 文件</li>' +
-      '<li><code>mdtool.exe --uninstall</code> 取消关联</li></ul>' +
-      '<h3>快捷键</h3><ul><li><code>Ctrl+E</code> 切换阅读/编辑</li><li><code>Ctrl+S</code> 保存</li></ul>');
+    showStatic(T.usage);
   } else {
     render();
     // 让 PgDn / 方向键直接滚动正文
     preview.focus({ preventScroll: true });
-    if (S.lossy) showBanner('无法识别文件编码，内容可能显示为乱码；保存时将按 UTF-8 写入。');
+    if (S.lossy) showBanner(T.lossy);
   }
 })();

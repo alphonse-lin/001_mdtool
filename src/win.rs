@@ -14,7 +14,8 @@ use winreg::enums::HKEY_CURRENT_USER;
 use winreg::RegKey;
 
 pub use windows_sys::Win32::UI::WindowsAndMessaging::{
-    IDNO, IDYES, MB_ICONERROR, MB_ICONINFORMATION, MB_ICONWARNING, MB_YESNOCANCEL,
+    IDNO, IDYES, MB_ICONERROR, MB_ICONINFORMATION, MB_ICONQUESTION, MB_ICONWARNING, MB_YESNO,
+    MB_YESNOCANCEL,
 };
 
 fn wide(s: &str) -> Vec<u16> {

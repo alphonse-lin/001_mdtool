@@ -1,6 +1,7 @@
 #![windows_subsystem = "windows"]
 
 mod doc;
+mod i18n;
 mod install;
 mod protocol;
 mod watch;
@@ -22,6 +23,7 @@ use tao::window::{Icon, Theme, WindowBuilder};
 use wry::{NewWindowResponse, ScrollBarStyle, WebContext, WebViewBuilder, WebViewBuilderExtWindows};
 
 use doc::{Decoded, Encoding};
+use i18n::tr;
 
 enum UserEvent {
     Ipc(String),
@@ -55,6 +57,16 @@ fn main() {
         Some("--install") => return report(install::install()),
         Some("--uninstall") => return report(install::uninstall()),
         Some("--background") => return background(),
+        None if !install::is_installed_copy() => {
+            // 直接双击下载的 exe：询问是否安装（已安装过则相当于升级）
+            let ask = tr(
+                "要安装 mdtool 并用它打开 .md 文件吗？\n\n只安装到当前用户，不需要管理员权限。\n选「否」则只显示使用说明。",
+                "Install mdtool and use it to open .md files?\n\nIt installs for the current user only, no admin rights needed.\nChoose No to just see the usage page.",
+            );
+            if win::message_box(0, "mdtool", ask, win::MB_YESNO | win::MB_ICONQUESTION) == win::IDYES {
+                return report(install::install());
+            }
+        }
         _ => {}
     }
     let path = arg.map(PathBuf::from).map(|p| std::path::absolute(&p).unwrap_or(p));
@@ -64,7 +76,7 @@ fn main() {
 fn report(result: io::Result<String>) {
     match result {
         Ok(msg) => win::message_box(0, "mdtool", &msg, win::MB_ICONINFORMATION),
-        Err(e) => win::message_box(0, "mdtool", &format!("操作失败：{e}"), win::MB_ICONERROR),
+        Err(e) => win::message_box(0, "mdtool", &format!("{}{e}", tr("操作失败：", "Failed: ")), win::MB_ICONERROR),
     };
 }
 
@@ -100,7 +112,7 @@ fn background() {
         std::process::exit(0);
     });
     let event_loop = EventLoopBuilder::<()>::new().build();
-    let window = WindowBuilder::new().with_visible(false).build(&event_loop).expect("创建窗口失败");
+    let window = WindowBuilder::new().with_visible(false).build(&event_loop).expect("failed to create window");
     let mut context = web_context();
     let Ok(webview) = webview_builder(&mut context).with_html("").build(&window) else { return };
     event_loop.run(move |_, _, flow| {
@@ -113,16 +125,16 @@ fn run(path: Option<PathBuf>, started: Instant) {
     // ---------- 读取文档，组装注入给前端的初始数据 ----------
     let last_mtime = Arc::new(Mutex::new(None));
     let name = path.as_deref().map(file_name);
-    let mut init = json!({});
+    let mut init = json!({
+        "lang": i18n::code(),
+        "debug": std::env::var_os("MDTOOL_TIMING").is_some(),
+    });
     let mut doc: Option<OpenDoc> = None;
     if let Some(path) = &path {
         let dir = path.parent().map(|d| d.to_string_lossy().replace('\\', "/")).unwrap_or_default();
-        init = json!({
-            "path": path.to_string_lossy(),
-            "name": name,
-            "dir": dir.trim_end_matches('/'),
-            "debug": std::env::var_os("MDTOOL_TIMING").is_some(),
-        });
+        init["path"] = path.to_string_lossy().into();
+        init["name"] = name.clone().into();
+        init["dir"] = dir.trim_end_matches('/').into();
         match doc::load(path) {
             Ok(d) => {
                 *last_mtime.lock().unwrap() = doc::mtime(path);
@@ -146,7 +158,7 @@ fn run(path: Option<PathBuf>, started: Instant) {
         .with_background_color(bg)
         .with_window_icon(Icon::from_resource(1, None).ok())
         .build(&event_loop)
-        .expect("创建窗口失败");
+        .expect("failed to create window");
     let hwnd = window.hwnd();
     let t_window = started.elapsed().as_millis();
 
@@ -177,7 +189,11 @@ fn run(path: Option<PathBuf>, started: Instant) {
     let webview = match webview {
         Ok(w) => w,
         Err(e) => {
-            win::message_box(hwnd, "mdtool", &format!("无法创建 WebView2：{e}\n请确认已安装 Microsoft Edge WebView2 运行时。"), win::MB_ICONERROR);
+            win::message_box(hwnd, "mdtool", &format!(
+                "{}{e}\n{}",
+                tr("无法创建 WebView2：", "Could not create WebView2: "),
+                tr("请确认已安装 Microsoft Edge WebView2 运行时。", "Please make sure the Microsoft Edge WebView2 Runtime is installed."),
+            ), win::MB_ICONERROR);
             return;
         }
     };
@@ -204,7 +220,7 @@ fn run(path: Option<PathBuf>, started: Instant) {
                     *flow = ControlFlow::Exit;
                     return;
                 }
-                let msg = format!("是否保存对“{}”的修改？", name.as_deref().unwrap_or(""));
+                let msg = tr("是否保存对“{}”的修改？", "Save changes to \"{}\"?").replace("{}", name.as_deref().unwrap_or(""));
                 match win::message_box(hwnd, "mdtool", &msg, win::MB_YESNOCANCEL | win::MB_ICONWARNING) {
                     win::IDYES => eval("mdtool.requestSaveAndClose()".into()),
                     win::IDNO => *flow = ControlFlow::Exit,
@@ -246,7 +262,7 @@ fn run(path: Option<PathBuf>, started: Instant) {
 
 /// 持锁写入并更新已知修改时间，这样监听线程不会把这次保存当成外部修改。
 fn save(doc: Option<&mut OpenDoc>, last_mtime: &Mutex<Option<std::time::SystemTime>>, text: &str) -> io::Result<()> {
-    let doc = doc.ok_or_else(|| io::Error::other("没有打开的文件"))?;
+    let doc = doc.ok_or_else(|| io::Error::other(tr("没有打开的文件", "No file is open")))?;
     let mut last = last_mtime.lock().unwrap();
     doc.encoding = doc::save(&doc.path, text, doc.encoding)?;
     *last = doc::mtime(&doc.path);
@@ -268,7 +284,7 @@ fn open_link(hwnd: isize, msg: &Value) {
     let Some(target) = msg["path"].as_str() else { return };
     let path = Path::new(target);
     if !path.exists() {
-        win::message_box(hwnd, "mdtool", &format!("文件不存在：\n{}", path.display()), win::MB_ICONWARNING);
+        win::message_box(hwnd, "mdtool", &format!("{}\n{}", tr("文件不存在：", "File not found:"), path.display()), win::MB_ICONWARNING);
         return;
     }
     let ext = path.extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).unwrap_or_default();

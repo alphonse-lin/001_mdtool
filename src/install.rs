@@ -9,13 +9,14 @@ use std::time::Duration;
 use winreg::enums::{RegType, HKEY_CURRENT_USER, KEY_ALL_ACCESS};
 use winreg::{RegKey, RegValue};
 
+use crate::i18n::tr;
 use crate::win;
 
 const PROG_ID: &str = "mdtool.md";
 const EXTENSIONS: [&str; 2] = [".md", ".markdown"];
 const RUN_KEY: &str = r"Software\Microsoft\Windows\CurrentVersion\Run";
 
-const README: &str = "# mdtool 已安装
+const README_ZH: &str = "# mdtool 已安装
 
 现在请在弹出的「打开方式」窗口中选择 **mdtool**，并点「始终」。之后双击任何 `.md` 文件都会用 mdtool 打开。
 
@@ -40,8 +41,40 @@ const README: &str = "# mdtool 已安装
 （有它时打开约 0.25 秒，没有时约 0.6 秒）。不需要的话，在「任务管理器 → 启动应用」中禁用 mdtool 即可。
 ";
 
+const README_EN: &str = "# mdtool is installed
+
+In the **Open with** dialog, pick **mdtool** and click **Always**. From then on, double-clicking any `.md` file opens it in mdtool.
+
+No dialog? Right-click any `.md` file → Open with → Choose another app → mdtool → Always.
+
+## Shortcuts
+
+| Shortcut | Action |
+|---|---|
+| `Ctrl+E` | Toggle reading / editing |
+| `Ctrl+S` | Save |
+| `Ctrl+F` | Find |
+| `Ctrl+Mouse wheel` | Zoom |
+
+## Uninstall
+
+Run `mdtool.exe --uninstall`, then delete this folder.
+
+## Background helper
+
+To open files faster, mdtool starts a hidden background helper at login that keeps WebView2 ready
+(about 0.25 s per file with it, about 0.6 s without). If you don't want it, disable mdtool in Task Manager → Startup apps.
+";
+
 fn install_dir() -> PathBuf {
     win::local_app_data().join("Programs").join("mdtool")
+}
+
+/// 当前运行的是否就是已安装的那份 exe。
+pub fn is_installed_copy() -> bool {
+    let current = std::env::current_exe().and_then(std::fs::canonicalize);
+    let installed = std::fs::canonicalize(install_dir().join("mdtool.exe"));
+    matches!((current, installed), (Ok(a), Ok(b)) if a == b)
 }
 
 fn classes() -> io::Result<RegKey> {
@@ -61,14 +94,14 @@ pub fn install() -> io::Result<String> {
         std::fs::copy(&current, &exe)?;
     }
     let readme = dir.join("README.md");
-    std::fs::write(&readme, README)?;
+    std::fs::write(&readme, tr(README_ZH, README_EN))?;
 
     let exe = exe.display().to_string();
     let command = format!("\"{exe}\" \"%1\"");
     let classes = classes()?;
 
     let (prog, _) = classes.create_subkey(PROG_ID)?;
-    prog.set_value("", &"Markdown 文档")?;
+    prog.set_value("", &tr("Markdown 文档", "Markdown Document"))?;
     prog.create_subkey("DefaultIcon")?.0.set_value("", &format!("\"{exe}\",0"))?;
     prog.create_subkey(r"shell\open\command")?.0.set_value("", &command)?;
 
@@ -96,7 +129,12 @@ pub fn install() -> io::Result<String> {
         .spawn()?;
 
     Ok(format!(
-        "已安装到：\n{exe}\n\n接下来在「打开方式」窗口中选择 mdtool，并点「始终」。"
+        "{}\n{exe}\n\n{}",
+        tr("已安装到：", "Installed to:"),
+        tr(
+            "接下来在「打开方式」窗口中选择 mdtool，并点「始终」。",
+            "Now pick mdtool in the \"Open with\" dialog and click \"Always\".",
+        ),
     ))
 }
 
@@ -115,7 +153,11 @@ pub fn uninstall() -> io::Result<String> {
     }
     win::refresh_shell();
     Ok(format!(
-        "已取消 .md 文件关联。\n如需彻底删除，请手动删除目录：\n{}",
+        "{}\n{}",
+        tr(
+            "已取消 .md 文件关联和开机后台进程。\n如需彻底删除，请手动删除目录：",
+            "Removed the .md file association and the startup helper.\nTo remove mdtool completely, delete this folder:",
+        ),
         install_dir().display()
     ))
 }
