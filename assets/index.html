@@ -2,6 +2,8 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
+<!-- 文档里的 HTML 会被渲染：只允许 mdtool 自带的脚本运行，阻止文档中的内联脚本/事件处理器和 iframe -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src * data: blob:; media-src *; font-src 'self' data:; connect-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>mdtool</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="vendor/hljs/github.min.css" media="(prefers-color-scheme: light)">

@@ -2,6 +2,11 @@
 name = "mdtool"
 version = "0.1.0"
 edition = "2021"
+description = "A tiny, fast Markdown viewer & editor for Windows"
+license = "MIT"
+readme = "README.md"
+keywords = ["markdown", "viewer", "editor", "windows", "webview2"]
+categories = ["text-editors"]
 
 [dependencies]
 wry = "0.57"
