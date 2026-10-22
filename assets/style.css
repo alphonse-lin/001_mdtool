@@ -1,0 +1,140 @@
+:root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --fg: #1f2328;
+  --muted: #59636e;
+  --border: #d1d9e0;
+  --border-soft: #d1d9e0b3;
+  --code-bg: #f6f8fa;
+  --inline-code-bg: #818b981f;
+  --link: #0969da;
+  --mark: #fff8c5;
+  --banner-bg: #fff8c5;
+  --banner-border: #d4a72c66;
+  --sel: #b6d7ff;
+  --cm-header: #0550ae;
+  --cm-meta: #6e7781;
+  --cm-code: #953800;
+  --btn-bg: #f6f8fa;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #0d1117;
+    --fg: #e6edf3;
+    --muted: #9198a1;
+    --border: #3d444d;
+    --border-soft: #3d444db3;
+    --code-bg: #151b23;
+    --inline-code-bg: #656c7633;
+    --link: #4493f8;
+    --mark: #bb800926;
+    --banner-bg: #bb800926;
+    --banner-border: #bb800966;
+    --sel: #264f78;
+    --cm-header: #79c0ff;
+    --cm-meta: #8b949e;
+    --cm-code: #ffa657;
+    --btn-bg: #212830;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); }
+body {
+  display: flex; flex-direction: column; overflow: hidden;
+  font: 16px/1.6 -apple-system, "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+}
+
+/* 顶部提示条 */
+#banner {
+  display: flex; gap: 12px; align-items: center; justify-content: space-between;
+  padding: 8px 16px; font-size: 14px;
+  background: var(--banner-bg); border-bottom: 1px solid var(--banner-border);
+}
+#banner[hidden] { display: none; }
+#banner-actions { display: flex; gap: 8px; }
+
+/* 阅读 / 编辑布局 */
+#main { flex: 1; display: flex; min-height: 0; }
+#editor { display: none; width: 50%; border-right: 1px solid var(--border); }
+#preview { flex: 1; overflow: auto; }
+body.editing #editor { display: block; }
+
+/* 右上角工具栏：平时半透明，悬停时显现 */
+#toolbar {
+  position: fixed; top: 10px; right: 22px; display: flex; gap: 6px;
+  opacity: .35; transition: opacity .15s;
+}
+#toolbar:hover, body.editing #toolbar { opacity: 1; }
+#btn-save { display: none; }
+body.editing #btn-save { display: inline-block; }
+button {
+  font: inherit; font-size: 13px; padding: 3px 12px; cursor: pointer;
+  color: var(--fg); background: var(--btn-bg);
+  border: 1px solid var(--border); border-radius: 6px;
+}
+button:hover { border-color: var(--muted); }
+
+/* CodeMirror */
+.CodeMirror {
+  height: 100%; background: var(--bg); color: var(--fg);
+  font: 14px/1.6 "Cascadia Mono", Consolas, "Microsoft YaHei UI", monospace;
+}
+.CodeMirror-lines { padding: 24px 0; }
+.CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like { padding: 0 24px; }
+.CodeMirror-cursor { border-left-color: var(--fg); }
+.CodeMirror-selected, .CodeMirror-focused .CodeMirror-selected { background: var(--sel); }
+.cm-s-default .cm-header { color: var(--cm-header); font-weight: 600; }
+.cm-s-default .cm-quote { color: var(--muted); }
+.cm-s-default .cm-link, .cm-s-default .cm-url { color: var(--link); }
+.cm-s-default .cm-comment { color: var(--cm-code); }
+.cm-s-default .cm-formatting, .cm-s-default .cm-meta { color: var(--cm-meta); }
+.cm-s-default .cm-variable-2, .cm-s-default .cm-variable-3, .cm-s-default .cm-keyword { color: var(--fg); }
+.cm-s-default .cm-strong { font-weight: 700; }
+.cm-s-default .cm-em { font-style: italic; }
+.cm-s-default .cm-strikethrough { text-decoration: line-through; }
+
+/* Markdown 正文（GitHub 风格） */
+.markdown-body { max-width: 920px; margin: 0 auto; padding: 32px 48px 80px; word-wrap: break-word; }
+body.editing .markdown-body { padding: 24px 32px 80px; }
+.markdown-body > :first-child { margin-top: 0 !important; }
+.markdown-body a { color: var(--link); text-decoration: none; }
+.markdown-body a:hover { text-decoration: underline; }
+.markdown-body p, .markdown-body blockquote, .markdown-body ul, .markdown-body ol,
+.markdown-body dl, .markdown-body table, .markdown-body pre, .markdown-body details { margin: 0 0 16px; }
+.markdown-body h1, .markdown-body h2, .markdown-body h3,
+.markdown-body h4, .markdown-body h5, .markdown-body h6 {
+  margin: 24px 0 16px; font-weight: 600; line-height: 1.25;
+}
+.markdown-body h1 { font-size: 2em; padding-bottom: .3em; border-bottom: 1px solid var(--border-soft); }
+.markdown-body h2 { font-size: 1.5em; padding-bottom: .3em; border-bottom: 1px solid var(--border-soft); }
+.markdown-body h3 { font-size: 1.25em; }
+.markdown-body h4 { font-size: 1em; }
+.markdown-body h5 { font-size: .875em; }
+.markdown-body h6 { font-size: .85em; color: var(--muted); }
+.markdown-body ul, .markdown-body ol { padding-left: 2em; }
+.markdown-body li + li { margin-top: .25em; }
+.markdown-body li > p { margin-top: 16px; }
+.markdown-body ul ul, .markdown-body ul ol, .markdown-body ol ol, .markdown-body ol ul { margin: 0; }
+.markdown-body blockquote { padding: 0 1em; color: var(--muted); border-left: .25em solid var(--border); }
+.markdown-body hr { height: .25em; margin: 24px 0; padding: 0; border: 0; background: var(--border); }
+.markdown-body img { max-width: 100%; }
+.markdown-body mark { background: var(--mark); color: inherit; }
+.markdown-body table { display: block; width: max-content; max-width: 100%; overflow: auto; border-collapse: collapse; }
+.markdown-body th, .markdown-body td { padding: 6px 13px; border: 1px solid var(--border); }
+.markdown-body th { font-weight: 600; }
+.markdown-body tr:nth-child(2n) { background: var(--code-bg); }
+.markdown-body code, .markdown-body pre {
+  font-family: "Cascadia Mono", Consolas, "Microsoft YaHei UI", monospace; font-size: 85%;
+}
+.markdown-body code { padding: .2em .4em; border-radius: 6px; background: var(--inline-code-bg); }
+.markdown-body pre { padding: 16px; overflow: auto; line-height: 1.45; border-radius: 6px; background: var(--code-bg); }
+.markdown-body pre code { padding: 0; font-size: 100%; background: transparent; white-space: pre; }
+.markdown-body .task-list-item { list-style: none; }
+.markdown-body .task-list-item input { margin: 0 .3em .25em -1.4em; vertical-align: middle; }
+.markdown-body .footnotes { font-size: 85%; color: var(--muted); }
+.markdown-body .footnotes-sep { height: 1px; }
+.markdown-body .katex-display { overflow-x: auto; overflow-y: hidden; padding: 4px 0; }
+.markdown-body eqn, .markdown-body section.eqno { display: block; }
+.markdown-body .error { color: #cf222e; }

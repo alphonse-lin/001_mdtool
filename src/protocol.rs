@@ -1,7 +1,7 @@
-//! `mdtool://` 自定义协议：/app/* 为嵌入的前端资源，/doc/* 为文档目录下的文件，/abs/* 为绝对路径文件。
+//! `mdtool://` 自定义协议：/app/* 为嵌入的前端资源，/abs/* 为本地文件（前端已把相对路径解析成绝对路径）。
 
 use std::borrow::Cow;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use include_dir::{include_dir, Dir};
 use wry::http::{header::CONTENT_TYPE, Request, Response};
@@ -15,11 +15,9 @@ pub enum Resolved {
     NotFound,
 }
 
-pub fn resolve(path: &str, doc_dir: &Path) -> Resolved {
+pub fn resolve(path: &str) -> Resolved {
     if let Some(rest) = path.strip_prefix("/app/") {
         Resolved::App(percent_decode(rest))
-    } else if let Some(rest) = path.strip_prefix("/doc/") {
-        Resolved::File(doc_dir.join(percent_decode(rest)))
     } else if let Some(rest) = path.strip_prefix("/abs/") {
         Resolved::File(PathBuf::from(percent_decode(rest)))
     } else {
@@ -66,9 +64,9 @@ pub fn mime_for(name: &str) -> &'static str {
     }
 }
 
-pub fn handle(request: Request<Vec<u8>>, doc_dir: &Path) -> Response<Cow<'static, [u8]>> {
+pub fn handle(request: Request<Vec<u8>>) -> Response<Cow<'static, [u8]>> {
     let path = request.uri().path().to_owned();
-    let body: Option<(Cow<'static, [u8]>, &'static str)> = match resolve(&path, doc_dir) {
+    let body: Option<(Cow<'static, [u8]>, &'static str)> = match resolve(&path) {
         Resolved::App(name) => ASSETS
             .get_file(&name)
             .map(|f| (Cow::Borrowed(f.contents()), mime_for(&name))),
@@ -90,24 +88,18 @@ mod tests {
 
     #[test]
     fn resolves_app_assets() {
-        assert_eq!(resolve("/app/index.html", Path::new("C:/d")), Resolved::App("index.html".into()));
+        assert_eq!(resolve("/app/index.html"), Resolved::App("index.html".into()));
     }
 
     #[test]
-    fn resolves_doc_relative_files_with_percent_encoding() {
-        let dir = Path::new("C:/d");
-        assert_eq!(resolve("/doc/img/a%20b.png", dir), Resolved::File(dir.join("img/a b.png")));
-        assert_eq!(resolve("/doc/%E5%9B%BE.png", dir), Resolved::File(dir.join("图.png")));
-    }
-
-    #[test]
-    fn resolves_absolute_files() {
-        assert_eq!(resolve("/abs/C:/x/y.png", Path::new("C:/d")), Resolved::File(PathBuf::from("C:/x/y.png")));
+    fn resolves_files_with_percent_encoding() {
+        assert_eq!(resolve("/abs/C:/x/y.png"), Resolved::File(PathBuf::from("C:/x/y.png")));
+        assert_eq!(resolve("/abs/C%3A/my%20docs/%E5%9B%BE.png"), Resolved::File(PathBuf::from("C:/my docs/图.png")));
     }
 
     #[test]
     fn unknown_paths_are_not_found() {
-        assert_eq!(resolve("/other", Path::new("C:/d")), Resolved::NotFound);
+        assert_eq!(resolve("/doc/a.png"), Resolved::NotFound);
     }
 
     #[test]

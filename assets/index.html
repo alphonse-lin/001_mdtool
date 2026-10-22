@@ -1,1 +1,25 @@
 <!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>mdtool</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="vendor/hljs/github.min.css" media="(prefers-color-scheme: light)">
+<link rel="stylesheet" href="vendor/hljs/github-dark.min.css" media="(prefers-color-scheme: dark)">
+<script src="vendor/markdown-it.min.js"></script>
+<script src="vendor/markdown-it-task-lists.min.js"></script>
+<script src="vendor/markdown-it-footnote.min.js"></script>
+</head>
+<body>
+<div id="banner" hidden><span id="banner-text"></span><span id="banner-actions"></span></div>
+<div id="main">
+  <div id="editor"></div>
+  <div id="preview"><article id="content" class="markdown-body"></article></div>
+</div>
+<div id="toolbar">
+  <button id="btn-save" title="保存 (Ctrl+S)">保存</button>
+  <button id="btn-mode" title="切换阅读/编辑 (Ctrl+E)">编辑</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
