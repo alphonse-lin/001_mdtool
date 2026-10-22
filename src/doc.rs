@@ -54,8 +54,14 @@ pub fn load(path: &Path) -> io::Result<Decoded> {
     Ok(decode(&std::fs::read(path)?))
 }
 
-pub fn save(path: &Path, text: &str, encoding: Encoding) -> io::Result<()> {
-    std::fs::write(path, encode(text, encoding))
+/// 按指定编码保存，返回实际使用的编码：GBK 无法表示的字符（如 emoji）会让整篇改存为 UTF-8。
+pub fn save(path: &Path, text: &str, encoding: Encoding) -> io::Result<Encoding> {
+    let encoding = match encoding {
+        Encoding::Gbk if encoding_rs::GBK.encode(text).2 => Encoding::Utf8,
+        e => e,
+    };
+    std::fs::write(path, encode(text, encoding))?;
+    Ok(encoding)
 }
 
 pub fn mtime(path: &Path) -> Option<SystemTime> {
@@ -106,9 +112,17 @@ mod tests {
     }
 
     #[test]
+    fn gbk_save_falls_back_to_utf8_for_unencodable_chars() {
+        let path = std::env::temp_dir().join("mdtool_doc_emoji.md");
+        assert_eq!(save(&path, "表情 😀", Encoding::Gbk).unwrap(), Encoding::Utf8);
+        assert_eq!(std::fs::read(&path).unwrap(), "表情 😀".as_bytes());
+        std::fs::remove_file(&path).unwrap();
+    }
+
+    #[test]
     fn save_then_load_round_trips() {
         let path = std::env::temp_dir().join("mdtool_doc_test.md");
-        save(&path, "中文 text", Encoding::Gbk).unwrap();
+        assert_eq!(save(&path, "中文 text", Encoding::Gbk).unwrap(), Encoding::Gbk);
         let d = load(&path).unwrap();
         assert_eq!(d.text, "中文 text");
         assert_eq!(d.encoding, Encoding::Gbk);

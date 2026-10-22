@@ -1,5 +1,6 @@
 (() => {
   'use strict';
+  const t0 = performance.now();
 
   // Rust 通过 initialization script 注入：{path, name, dir, text, error, lossy}
   const S = window.__MDTOOL__ || {};
@@ -143,7 +144,7 @@
     ensureExtras(text);
     if (firstRender) {
       firstRender = false;
-      send({ cmd: 'rendered' });
+      send({ cmd: 'rendered', perf: [Math.round(t0), Math.round(performance.now())] });
     }
   }
 
