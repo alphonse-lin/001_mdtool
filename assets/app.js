@@ -9,6 +9,12 @@
   const content = $('content');
   const editorEl = $('editor');
   const send = (msg) => window.ipc && window.ipc.postMessage(JSON.stringify(msg));
+  if (S.debug) {
+    const log = (msg) => send({ cmd: 'log', msg: String(msg) });
+    window.addEventListener('error', (e) => log(`error: ${e.message} @${e.filename}:${e.lineno}`));
+    window.addEventListener('unhandledrejection', (e) => log(`rejection: ${e.reason}`));
+    window.addEventListener('keydown', (e) => log(`key: ${e.ctrlKey ? 'Ctrl+' : ''}${e.key}`), true);
+  }
 
   let text = typeof S.text === 'string' ? S.text : null;
   let savedText = text;
@@ -38,7 +44,8 @@
       const l = document.createElement('link');
       l.rel = 'stylesheet';
       l.href = href;
-      document.head.appendChild(l);
+      // 插在 style.css 前面，保证我们自己的样式优先
+      document.head.insertBefore(l, document.querySelector('link[href="style.css"]'));
       loaded.set(href, Promise.resolve());
     }
     return loaded.get(href);
@@ -258,6 +265,7 @@
     } else {
       clearTimeout(renderTimer);
       render();
+      preview.focus({ preventScroll: true });
     }
   }
 
@@ -333,6 +341,8 @@
       '<h3>快捷键</h3><ul><li><code>Ctrl+E</code> 切换阅读/编辑</li><li><code>Ctrl+S</code> 保存</li></ul>');
   } else {
     render();
+    // 让 PgDn / 方向键直接滚动正文
+    preview.focus({ preventScroll: true });
     if (S.lossy) showBanner('无法识别文件编码，内容可能显示为乱码；保存时将按 UTF-8 写入。');
   }
 })();

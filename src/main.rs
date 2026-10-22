@@ -42,6 +42,14 @@ const RUNNABLE: &[&str] = &[
 
 fn main() {
     let started = Instant::now();
+    // 没有控制台，panic 信息写到 %LOCALAPPDATA%\mdtool\crash.log
+    std::panic::set_hook(Box::new(|info| {
+        let dir = win::local_app_data().join("mdtool");
+        let _ = std::fs::create_dir_all(&dir);
+        if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(dir.join("crash.log")) {
+            let _ = writeln!(f, "{info}\n{}", std::backtrace::Backtrace::force_capture());
+        }
+    }));
     let arg = std::env::args_os().nth(1);
     match arg.as_ref().and_then(|a| a.to_str()) {
         Some("--install") => return report(install::install()),
@@ -113,6 +121,7 @@ fn run(path: Option<PathBuf>, started: Instant) {
             "path": path.to_string_lossy(),
             "name": name,
             "dir": dir.trim_end_matches('/'),
+            "debug": std::env::var_os("MDTOOL_TIMING").is_some(),
         });
         match doc::load(path) {
             Ok(d) => {
@@ -219,6 +228,7 @@ fn run(path: Option<PathBuf>, started: Instant) {
                         window.set_title(&window_title(name.as_deref(), dirty));
                     }
                     Some("open") => open_link(hwnd, &msg),
+                    Some("log") => log_timing(started, None, msg["msg"].as_str().unwrap_or_default()),
                     Some("rendered") => log_timing(started, path.as_deref(), &format!("window={t_window} webview={t_webview} js={}", msg["perf"])),
                     _ => {}
                 }

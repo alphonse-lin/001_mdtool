@@ -58,7 +58,7 @@ body {
 /* 阅读 / 编辑布局 */
 #main { flex: 1; display: flex; min-height: 0; }
 #editor { display: none; width: 50%; border-right: 1px solid var(--border); }
-#preview { flex: 1; overflow: auto; }
+#preview { flex: 1; overflow: auto; outline: none; }
 body.editing #editor { display: block; }
 
 /* 右上角工具栏：平时半透明，悬停时显现 */
